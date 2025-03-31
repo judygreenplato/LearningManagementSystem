@@ -1,0 +1,80 @@
+﻿@page "/courseoverview"
+@rendermode InteractiveWebAssembly
+
+@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs
+@using LMS.Shared.DTOs.Read
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using LMS.Blazor.Client.Components
+@using System.ComponentModel.DataAnnotations
+
+@attribute [Authorize]
+
+<PageTitle>Course Overview</PageTitle>
+<div class="row mb-1">
+    <h3>Kursöversikt</h3>
+</div>
+
+@if (course == null)
+{
+    <div class="d-flex w-100 h-100 justify-content-center align-items-center">
+        <div class="loader"></div>
+    </div>
+}
+else
+{
+    <div class="row">
+        <Course CourseData="course" />
+        <CourseStudents CourseData="course"/>
+
+    </div>
+
+    <div class="row">
+        <Modules CourseData="course" OnModuleSelected="HandleModuleSelected" />
+        <Activities SelectedModule="SelectedModule"   />
+    </div>
+
+}
+
+
+
+@code {
+    [Inject]
+    private IApiService _apiService { get; set; } = default!;
+    [Inject]
+    private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+    private CourseDto? course;
+    private ModuleDto? SelectedModule { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                if (_apiService != null)
+                {
+                    course = await _apiService.GetAsync<CourseDto>("courseForUser");
+                    StateHasChanged(); // Trigger UI update after fetching data
+                }
+                else
+                {
+                    Console.WriteLine("ApiService is not initialized.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching course: {ex.Message}");
+            }
+        }
+    }
+
+    private void HandleModuleSelected(ModuleDto selectedModule)
+    {
+        SelectedModule = selectedModule;
+    }
+
+    
+}

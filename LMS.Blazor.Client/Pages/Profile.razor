@@ -1,0 +1,110 @@
+﻿@page "/Profile"
+@rendermode InteractiveWebAssembly
+@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs.Read
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+
+@attribute [Authorize]
+
+@if (course == null && user == null)
+{
+	<div class="d-flex w-100 h-100 justify-content-center align-items-center">
+		<div class="loader"></div>
+	</div>
+}
+else
+{
+    <div class="no-padding container-fluid w-100 h-100 d-flex flex-column align-items-center lexicon-subpage-height">
+		<div class="col-md-8 lexicon-primary p-5 m-4 d-flex justify-content-between align-items-center flex-row lexicon-rounded-large login-width-mobile profile-flex">
+			<div>
+				<h2>@user.FirstName @user.LastName</h2>
+				<h4>@user.Email</h4>
+			</div>
+			<a class="nav-link btn nav-button lexicon-button lexicon-button-special button-fontsize profile-flex-button" href="account/update-password">ÄNDRA LÖSENORD</a>
+		</div>
+
+		<div class="col-md-8 lexicon-primary px-4 py-5 m-4 mt-0 d-flex flex-column lexicon-rounded-large login-width-mobile">
+			<div class="row profile-row">
+				<div class="col-4 profile-name">
+					<h4 class="lexicon-text">Kursnamn</h4>
+					<h3>@course.Name</h3>
+				</div>
+				<hr class="vertical-hr" />
+				<div class="col d-flex justify-content-center align-items-center flex-column">
+					<h4 class="lexicon-text">Startdatum</h4>
+					<h4><b>@course.StartDate.ToString("yyyy-MM-dd")</b></h4>
+				</div>
+				<hr class="vertical-hr" />
+				<div class="col d-flex justify-content-center align-items-center flex-column">
+					<h4 class="lexicon-text">Slutdatum</h4>
+					<h4><b>@course.EndDate.ToString("yyyy-MM-dd")</b></h4>
+				</div>
+				<hr class="vertical-hr" />
+				<div class="col d-flex justify-content-center align-items-center">
+					<div class="d-flex justify-content-center align-items-end ">
+						<a class="btn lexicon-button-tiny button-fontsize-tiny" href="courseoverview">Läs mer</a>
+					</div>
+				</div>
+			</div>
+
+			<hr class="mb-0"/>
+
+			@foreach (var module in course.Modules)
+			{
+				<div class="row mt-4 profile-row">
+					<div class="col-4 profile-name">
+						<h4 class="lexicon-text">Modulnamn</h4>
+						<h3>@module.Name</h3>
+					</div>
+					<hr class="vertical-hr" />
+					<div class="col d-flex justify-content-center align-items-center flex-column">
+						<h4 class="lexicon-text">Startdatum</h4>
+						<h4><b>@module.StartDate.ToString("yyyy-MM-dd")</b></h4>
+					</div>
+					<hr class="vertical-hr" />
+					<div class="col d-flex justify-content-center align-items-center flex-column">
+						<h4 class="lexicon-text">Slutdatum</h4>
+						<h4><b>@module.EndDate.ToString("yyyy-MM-dd")</b></h4>
+					</div>
+					<hr class="vertical-hr" />
+					<div class="col d-flex justify-content-center align-items-center">
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+@code {
+	[Inject]
+	private IApiService _apiService { get; set; } = default!;
+	[Inject]
+	private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+
+	private CourseDto? course;
+	private UserDto? user;
+
+	protected async override Task OnInitializedAsync()
+	{
+		try
+		{
+			// Retrieve user's claims
+			var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+			var claimsPrincipal = authState.User;
+
+			if (claimsPrincipal.Identity?.IsAuthenticated == true)
+			{
+				user = (await _apiService.GetAsync<UserDto>($"userInfo"));
+				course = await _apiService.GetAsync<CourseDto>("courseForUser");
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error: {ex.Message}");
+		}
+
+	}
+}

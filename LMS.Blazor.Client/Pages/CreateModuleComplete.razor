@@ -1,0 +1,20 @@
+﻿@page "/module-completed"
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveWebAssembly
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize(Roles = "Teacher")]
+
+<div class="no-padding container-fluid w-100 h-100 d-flex justify-content-center align-items-center lexicon-subpage-height">
+    <div class="lexicon-primary p-5 m-4 d-flex justify-content-center align-items-center flex-column lexicon-rounded-large">
+        <h1 class="special-margin text-center">MODUL SKAPAD!</h1>
+        <a class="nav-link btn nav-button lexicon-button button-fontsize special-margin-button" @onclick="NavigateToAdmin">FORTSÄTT</a>
+    </div>
+</div>
+
+@code {
+    private void NavigateToAdmin()
+    {
+        NavigationManager.NavigateTo("/admin");
+    }
+}

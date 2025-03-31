@@ -1,0 +1,77 @@
+﻿@using LMS.Shared.DTOs.Read
+@using System.ComponentModel.DataAnnotations
+
+<div class="col-lg-6 col-mb-6 col-sm-12">
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Nuvarande kurs</h5>
+            </div>
+        </div>
+        <div class="card-body-special">
+            @* <p class="card-text"></p> *@
+            <div class="table-responsive scrollable-container">
+                <table class="table table-hover ">
+                    <tbody>
+                        <tr>
+                            <th scope="row">@GetDisplayName(nameof(CourseData.Name))</th>
+                            <td>@CourseData.Name</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@GetDisplayName(nameof(CourseData.Description))</th>
+                            <td>@CourseData.Description</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@GetDisplayName(nameof(CourseData.StartDate))</th>
+                            <td>@CourseData.StartDate</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@GetDisplayName(nameof(CourseData.EndDate))</th>
+                            <td>@CourseData.EndDate</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-body-special {
+        display: flex;
+        flex-direction: column;
+        height: 300px !important;
+    }
+    .card-body {
+        display: flex;
+        flex-direction: column;
+        min-height: 250px; 
+        height: auto !important;
+    }
+    .scrollable-container {
+        flex-grow: 1;
+        overflow-y: auto; //Vertical scrolling
+        border: 1px solid #ccc; 
+        max-height: 100%; 
+    }
+</style>
+
+@code {
+    [Parameter]
+    public CourseDto CourseData { get; set; } = new CourseDto();
+
+    public string GetDisplayName(string propertyName)
+    {
+        var property = typeof(CourseDto).GetProperty(propertyName);
+        if (property != null)
+        {
+            var displayAttribute = property.GetCustomAttributes(typeof(DisplayAttribute), true)
+                                           .FirstOrDefault() as DisplayAttribute;
+            if (displayAttribute != null)
+            {
+                return displayAttribute.Name;
+            }
+        }
+        return propertyName; //If no DisplayAttribute is found, return the property name
+    }
+}

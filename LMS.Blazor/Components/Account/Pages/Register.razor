@@ -1,0 +1,235 @@
+﻿@page "/Account/Register"
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@using System.Text
+@using System.Text.Encodings.Web
+@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs.Create
+@using LMS.Shared.DTOs.Read
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Registrera</PageTitle>
+
+@if (courses == null)
+{
+    <div class="d-flex w-100 h-100 justify-content-center align-items-center">
+        <div class="loader"></div>
+    </div>
+}
+else
+{
+    <div class="no-padding container-fluid w-100 h-100 d-flex justify-content-center align-items-center">
+        <div class="lexicon-primary px-4 py-5 m-4 d-flex justify-content-center align-items-center flex-column lexicon-rounded-large col-md-6">
+            <h1 class="px-2">REGISTRERA</h1>
+            <div class="row d-flex justify-content-center align-items-center col-md-10">
+                <div class="col-md-8">
+                    <section>
+                        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
+                            <DataAnnotationsValidator />
+                            <hr />
+                            <ValidationSummary class="text-danger" role="alert" />
+                            <div class="dropwdown-wrapper d-flex flex-column">
+                                <select class="form-select" aria-label="Select Course" @bind="Input.SecondDropdown">
+                                    <option value="0" selected>Välj kurs...</option>
+                                    @foreach (var course in courses)
+                                    {
+                                        <option value="@course.CourseId">@course.Name</option>
+                                    }
+                                </select>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" checked>
+                                    <label class="form-check-label" for="flexRadioDefault1">
+                                        Default radio
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2">
+                                    <label class="form-check-label" for="flexRadioDefault2">
+                                        Default checked radio
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                                <label for="email">E-post</label>
+                                <ValidationMessage For="() => Input.Email" class="text-danger" />
+                            </div>
+                            <div class="form-floating mb-3">
+                                <InputText @bind-Value="Input.FirstName" class="form-control" autocomplete="given-name" aria-required="true" placeholder="First Name" />
+                                <label for="FirstName">Förnamn</label>
+                                @* <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" /> *@
+                            </div>
+                            <div class="form-floating mb-3">
+                                <InputText @bind-Value="Input.LastName" class="form-control" autocomplete="family-name" aria-required="true" placeholder="Last Name" />
+                                <label for="LastName">Efternamn</label>
+                                @* <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" /> *@
+                            </div>
+                            <div class="form-floating mb-3">
+                                <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                                <label for="password">Lösenord</label>
+                                <ValidationMessage For="() => Input.Password" class="text-danger" />
+                            </div>
+                            <div class="form-floating mb-3">
+                                <InputText type="password" @bind-Value="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                                <label for="confirm-password">Upprepa Lösenord</label>
+                                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
+                            </div>
+                            <button type="submit" class="btn w-100 lexicon-button lexicon-button-special button-fontsize">REGISTRERA</button>
+                        </EditForm>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private IEnumerable<IdentityError>? identityErrors;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    [Inject]
+    private IApiService _apiService { get; set; } = default!;
+    [Inject]
+    private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+    private List<CourseDto>? courses;
+    private static UserManager<UserForRegistrationDto> userManager = null!;
+
+    private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     try
+    //     {
+    //         if (_apiService != null)
+    //         {
+    //             courses = (await _apiService.GetAsync<List<CourseDto>>("api/courses")).ToList();
+    //             StateHasChanged(); // Trigger UI update after fetching data
+    //         }
+    //         else
+    //         {
+    //             Console.WriteLine("ApiService is not initialized.");
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"Error fetching course: {ex.Message}");
+    //     }
+    // }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchCoursesAsync();
+    }
+    private async Task FetchCoursesAsync()
+    {
+        try
+        {
+            courses = (await _apiService.GetAsync<List<CourseDto>>("courses")).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while fetching courses: {ex.Message}");
+        }
+    }
+
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if (firstRender)
+    //     {
+    //         try
+    //         {
+    //             if (_apiService != null)
+    //             {
+    //                 courses = (await _apiService.GetAsync<List<CourseDto>>("courses")).ToList();
+    //                 StateHasChanged(); // Trigger UI update after fetching data
+    //             }
+    //             else
+    //             {
+    //                 Console.WriteLine("ApiService is not initialized.");
+    //             }
+    //         }
+    //         catch (Exception ex)
+    //         {
+    //             Console.WriteLine($"Error fetching course: {ex.Message}");
+    //         }
+    //     }
+    // }
+
+    public async Task RegisterUser(EditContext editContext)
+    {
+        var httpClient = HttpClientFactory.CreateClient("LmsAPIClient");
+
+        var registerDto = new UserForRegistrationDto
+        {
+            CourseId = Input.SecondDropdown,
+            Email = Input.Email,
+            Password = Input.Password,
+            UserName = Input.Email,
+            FirstName = Input.FirstName,
+            LastName = Input.LastName
+        };
+
+        try
+        {
+            registerDto = await _apiService.PostAsync<UserForRegistrationDto, UserForRegistrationDto>("auth/register", registerDto);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+
+        // await userManager.CreateAsync(registerDto, Input.Password);
+
+        // var result = await userManager.AddToRoleAsync(registerDto, "Student");
+
+        // if (!result.Succeeded) throw new Exception(string.Join("\n", result.Errors));
+
+        NavigationManager.NavigateTo("/register-user-complete");
+    }
+
+    private static async Task AddUserToRoleAsync(UserForRegistrationDto user, string roleName)
+    {
+        if (!await userManager.IsInRoleAsync(user, roleName))
+        {
+            var result = await userManager.AddToRoleAsync(user, roleName);
+            if (!result.Succeeded) throw new Exception(string.Join(", ", result.Errors.Select(x => "Code " + x.Code + " Description" + x.Description)));
+        }
+    }
+
+    private sealed class InputModel
+    {
+        public int SecondDropdown { get; set; }
+
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = "";
+
+        [Display(Name = "First Name")]
+        public string FirstName { get; set; } = "";
+
+        [Display(Name = "Last Name")]
+        public string LastName { get; set; } = "";
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "Password")]
+        public string Password { get; set; } = "";
+
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirm password")]
+        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; } = "";
+    }
+}

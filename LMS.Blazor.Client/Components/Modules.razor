@@ -1,0 +1,45 @@
+﻿@using LMS.Shared.DTOs.Read
+
+<div class="col-lg-6 col-mb-6 col-sm-12">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Moduler</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Modul</th>
+                            <th>Beskrivning</th>
+                            <th>Startdatum</th>
+                            <th>Slutdatum</th>
+                            <th>Filhantering</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var module in CourseData.Modules)
+                        {
+                            <tr @onclick="() => OnModuleSelected.InvokeAsync(module)">
+                                <td>@module.Name</td>
+                                <td>@module.Description</td>
+                                <td>@module.StartDate.ToString("yyyy-MM-dd")</td>
+                                <td>@module.EndDate.ToString("yyyy-MM-dd")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public CourseDto CourseData { get; set; } = new CourseDto();
+
+    [Parameter]
+    public EventCallback<ModuleDto> OnModuleSelected { get; set; }
+
+}

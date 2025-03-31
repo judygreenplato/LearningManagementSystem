@@ -1,0 +1,52 @@
+﻿@using LMS.Shared.DTOs.Read
+<div class="col-lg-6 col-mb-6 col-sm-12">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Kursdeltagare</h5>
+        </div>
+        <div class="card-body-special">
+            @* <p class="card-text"></p> *@
+            <div class="table-responsive scrollable-container">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Förnamn</th>
+                            <th>Efternamn</th>
+                            <th>E-post</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            @foreach (var user in CourseData.Users)
+                            {
+                                <tr>
+                                    <td>@user.FirstName</td>
+                                    <td>@user.LastName</td>
+                                    <td>@user.Email</td>
+                                </tr>
+                            }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-body {
+        display: flex;
+        flex-direction: column;
+        height: 250px;
+    }
+
+    .scrollable-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        //Vertical scrolling border: 1px solid #ccc;
+        max-height: 100%;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public CourseDto CourseData { get; set; } = new CourseDto();
+}

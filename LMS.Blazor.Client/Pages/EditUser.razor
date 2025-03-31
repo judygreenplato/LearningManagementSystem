@@ -1,0 +1,198 @@
+﻿@page "/edit-user"
+@page "/edit-user/{targetId}"
+@rendermode InteractiveWebAssembly
+
+@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs.Read
+@using LMS.Shared.DTOs.Update
+@using Microsoft.AspNetCore.Components.Authorization
+@using LMS.Shared.DTOs
+@using Microsoft.AspNetCore.Authorization
+@using LMS.Blazor.Client.Components.Home
+
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize(Roles = "Teacher")]
+
+<PageTitle>Edit User</PageTitle>
+
+@if (user == null && courses == null)
+{
+    <div class="d-flex w-100 h-100 justify-content-center align-items-center lexicon-subpage-height">
+        <div class="loader"></div>
+    </div>
+}
+else
+{
+    <div class="no-padding container-fluid w-100 h-100 d-flex justify-content-center align-items-center lexicon-subpage-height">
+        <div class="lexicon-primary px-4 py-5 m-4 d-flex justify-content-center align-items-center flex-column lexicon-rounded-large col-md-6 login-width-mobile">
+            <h1 class="px-2 text-center">REDIGERA</h1>
+            <div class="row d-flex justify-content-center align-items-center col-md-10 login-info">
+                <div class="col-md-8">
+                    <section>
+                        <EditForm Model="user" OnValidSubmit="SaveUser">
+                            <DataAnnotationsValidator />
+                            <hr />
+                            @if (user.Role == "Student"){
+                                <div class="dropwdown-wrapper d-flex flex-column">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="roleNumber" id="roleNumber1" checked @onchange="(() => UpdateRole(1))">
+                                        <label class="form-check-label" for="roleNumber1">
+                                            Student
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="roleNumber" id="roleNumber2" @onchange="(() => UpdateRole(2))">
+                                        <label class="form-check-label" for="roleNumber2">
+                                            Lärare
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="dropwdown-wrapper d-flex flex-column">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="roleNumber" id="roleNumber1" @onchange="(() => UpdateRole(1))">
+                                        <label class="form-check-label" for="roleNumber1">
+                                            Student
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="roleNumber" id="roleNumber2" checked @onchange="(() => UpdateRole(2))">
+                                        <label class="form-check-label" for="roleNumber2">
+                                            Lärare
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="form-floating mb-3 mt-2">
+                                <select class="form-select pt-0 pb-0" aria-label="Select Course" @bind="user.CourseId">
+                                    <option value="0" selected>Välj kurs...</option>
+                                    @foreach (var course in courses)
+                                    {
+                                        <option value="@course.CourseId">@course.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <InputText id="userEmail" autocomplete="email" class="form-control" aria-required="true" placeholder="name@example.com" @bind-Value="user.Email" />
+                                <label for="userEmail">E-post</label>
+                                <ValidationMessage For="() => user.Email" class="text-danger" />
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <InputText id="userFirstName" autocomplete="given-name" class="form-control" aria-required="true" @bind-Value="user.FirstName" />
+                                <label for="userFirstName">Förnamn</label>
+                                <ValidationMessage For="() => user.FirstName" class="text-danger" />
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <InputText id="userLastName" autocomplete="family-name" class="form-control" aria-required="true" @bind-Value="user.LastName" />
+                                <label for="userLastName">Efternamn</label>
+                                <ValidationMessage For="() => user.LastName" class="text-danger" />
+                            </div>
+
+                            <div class="d-flex justify-content-center">
+                                <button type="submit" class="btn lexicon-button button-fontsize">REDIGERA</button>
+                            </div>
+                        </EditForm>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Inject]
+    private IApiService _apiService { get; set; } = default!;
+
+    [Parameter]
+    public string targetId { get; set; } = "";
+
+    private int roleNumber = 0;
+    private const string adminRole = "Teacher";
+    private const string studentRole = "Student";
+
+    private UserDto? user;
+    private UserUpdateDto? updatedUser;
+    private List<CourseDto>? courses;
+
+    // Fetch course details on render
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                if (_apiService != null)
+                {
+                    user = await _apiService.GetAsync<UserDto>($"users/{targetId}");
+                    courses = (await _apiService.GetAsync<List<CourseDto>>("courses")).ToList();
+
+                    if (user.Role == adminRole)
+                    {
+                        roleNumber = 2;
+                    }
+                    else
+                    {
+                        roleNumber = 1;
+                    }
+
+                    StateHasChanged();
+                }
+                else
+                {
+                    Console.WriteLine("ApiService is not initialized.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while fetching course: {ex.Message}");
+            }
+        }
+    }
+
+    public void UpdateRole(int role)
+    {
+        if (role == 2)
+        {
+            roleNumber = 2;
+        }
+        else
+        {
+            roleNumber = 1;
+        }
+    }
+
+    // Save course details
+    private async Task SaveUser()
+    {
+        if (user != null && _apiService != null)
+        {
+            try
+            {
+                user.Role = roleNumber == 2 ? adminRole : studentRole;
+
+                updatedUser = await _apiService.PutAsync<UserDto, UserUpdateDto>($"users/{targetId}", user);
+
+                if (updatedUser != null) // Check if the course was successfully updated
+                {
+                    NavigationManager.NavigateTo("/admin");
+                }
+                else
+                {
+                    Console.WriteLine("Failed to update the course.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while saving course: {ex.Message}");
+            }
+        }
+    }
+}

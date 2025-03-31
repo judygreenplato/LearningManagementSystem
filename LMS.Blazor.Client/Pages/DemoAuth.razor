@@ -1,0 +1,66 @@
+﻿@page "/demoauth"
+@rendermode InteractiveWebAssembly
+
+@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs
+@using LMS.Shared.DTOs.Read
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+
+@attribute [Authorize]
+
+<h1>Demo calling a auth endpoint in LMS.API</h1>
+
+<p>When you login the Tokens get saved in memory at the Blazor server in TokenStorage</p>
+<p>The request go to the ProxyController endpoint which have access to the saved tokens</p>
+<p>The ProxyController creates request to LMS.API with access token set</p>
+<p>Client project never have access to tokens</p>
+
+<button class="btn btn-primary" @onclick="CallAPIAsync">Call API</button>
+
+@if (courses == null)
+{
+    <p>API not called yet</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var course in courses)
+            {
+                <tr>
+                    <td>@course.Name</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<AuthorizeView Roles="Admin">
+    <Authorized>
+        <p>Hej auth user</p>
+    </Authorized>
+</AuthorizeView>
+
+
+@code {
+
+    [Inject]
+    private IApiService _apiService { get; set; } = default!;
+    [Inject]
+    private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+    private List<CourseDto>? courses; 
+
+    private async Task CallAPIAsync()
+    {
+        courses = (await _apiService.GetAsync<List<CourseDto>>("courses"))
+            .ToList();
+    } 
+
+}

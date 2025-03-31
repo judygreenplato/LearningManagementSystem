@@ -1,0 +1,109 @@
+﻿@page "/home"
+@rendermode InteractiveWebAssembly
+
+@using LMS.Blazor.Client.Models;
+@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs
+@using LMS.Shared.DTOs.Read
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using LMS.Blazor.Client.Components.Home
+
+@attribute [Authorize]
+
+<PageTitle>Home</PageTitle>
+
+@if (course == null)
+{
+	<div class="d-flex w-100 h-100 justify-content-center align-items-center lexicon-subpage-height">
+		<div class="loader"></div>
+	</div>
+}
+else
+{
+	<div class="d-flex flex-wrap flex-row justify-content-evenly m-0 home-padding">
+		@if (course != null)
+		{
+			<HomeCourse CourseData="course" />
+		}
+		@if (module != null)
+		{
+			<HomeModule ModuleData="module" />
+		}
+		@if (activity != null)
+		{
+			<HomeActivity ActivityData="activity" />
+		}
+		@if (isTeacher)
+		{
+			<HomeAdmin />
+		}
+	</div>
+}
+
+@code {
+	[Inject]
+	private IApiService _apiService { get; set; } = default!;
+	[Inject]
+	private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+	private UserInfo? userInfo;
+	private CourseDto? course;
+	private ModuleDto? module;
+	private ActivityDto? activity;
+	private DateTime checkDate = DateTime.Now;
+
+	private bool isTeacher = false;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+		var user = authState.User;
+
+		if (user.Identity.IsAuthenticated)
+		{
+			isTeacher = user.IsInRole("Teacher");
+		}
+
+		if (firstRender)
+		{
+			try
+			{
+				if (_apiService != null)
+				{
+					course = await _apiService.GetAsync<CourseDto>("courseForUser");
+					if (course.Modules != null)
+					{
+						foreach (var item in course.Modules)
+						{
+							if (checkDate >= item.StartDate && checkDate < item.EndDate)
+							{
+								module = item;
+							}
+						}
+					}
+					if (module?.Activities != null)
+					{
+						foreach (var item in module.Activities)
+						{
+							if (checkDate >= item.StartDate && checkDate < item.EndDate)
+							{
+								activity = item;
+							}
+						}
+					}
+
+					StateHasChanged(); // Trigger UI update after fetching data
+				}
+				else
+				{
+					Console.WriteLine("ApiService is not initialized.");
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error fetching course: {ex.Message}");
+			}
+		}
+	}
+}

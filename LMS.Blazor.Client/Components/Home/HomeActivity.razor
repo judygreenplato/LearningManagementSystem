@@ -1,0 +1,75 @@
+﻿@using LMS.Shared.DTOs.Read
+
+<div class="lexicon-primary d-flex flex-row home-padding mb-5 lexicon-rounded lexicon-home-box">
+    <div class="lexicon-image-home-box">
+        <img class="lexicon-image-home lexicon-rounded" src="@image" />
+    </div>
+    <div class="home-card-info d-flex flex-column justify-content-between">
+        <div>
+            <div class="text-center">
+                <h3 class="mb-0">@ActivityData.Name</h3>
+            </div>
+            <p class="my-2">@truncatedString</p>
+        </div>
+        <div>
+            <div class="d-flex align-items-center flex-column">
+                <p><b>Slutdatum:</b> @ActivityData.EndDate.ToString("yyyy-MM-dd")</p>
+                <a href="courseoverview" class="btn lexicon-button-tiny button-fontsize-tiny">
+                    LÄS MER
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public ActivityDto ActivityData { get; set; } = new ActivityDto();
+
+    public int maxLength = 250;
+    public string truncatedString = "";
+    private string image = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ActivityData.Name.Contains("Azure", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/Azure.png";
+        }
+        else if (ActivityData.Name.Contains("Blazor", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/Blazor.png";
+        }
+        else if (ActivityData.Name.Contains("C#", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/C#.png";
+        }
+        else if (ActivityData.Name.Contains("CSS", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/CSS.png";
+        }
+        else if (ActivityData.Name.Contains("Html", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/Html.png";
+        }
+        else if (ActivityData.Name.Contains("JavaScript", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/JavaScript.png";
+        }
+        else if (ActivityData.Name.Contains("MVC", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/MVC.png";
+        }
+        else
+        {
+            image = "Images/Generic.png";
+        }
+
+        Truncate();
+    }
+
+    protected void Truncate()
+    {
+        truncatedString = ActivityData.Description.Length > maxLength ? $"{ActivityData.Description.Substring(0, maxLength)}..." : ActivityData.Description;
+    }
+}

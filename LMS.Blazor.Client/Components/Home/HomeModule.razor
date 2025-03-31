@@ -1,0 +1,75 @@
+﻿@using LMS.Shared.DTOs.Read
+
+<div class="lexicon-primary d-flex flex-row home-padding mb-5 lexicon-rounded lexicon-home-box">
+    <div class="lexicon-image-home-box">
+        <img class="lexicon-image-home lexicon-rounded" src="@image" />
+    </div>
+    <div class="home-card-info d-flex flex-column justify-content-between">
+        <div>
+            <div class="text-center">
+                <h3 class="mb-0">@ModuleData.Name</h3>
+            </div>
+            <p class="my-2">@truncatedString</p>
+        </div>
+        <div>
+            <div class="d-flex align-items-center flex-column">
+                <p><b>Slutdatum:</b> @ModuleData.EndDate.ToString("yyyy-MM-dd")</p>
+                <a href="courseoverview" class="btn lexicon-button-tiny button-fontsize-tiny">
+                    LÄS MER
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public ModuleDto ModuleData { get; set; } = new ModuleDto();
+
+    private int maxLength = 250;
+    private string truncatedString = "";
+    private string image = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ModuleData.Name.Contains("Azure", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/Azure.png";
+        }
+        else if (ModuleData.Name.Contains("Blazor", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/Blazor.png";
+        }
+        else if (ModuleData.Name.Contains("C#", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/CSharp.png";
+        }
+        else if (ModuleData.Name.Contains("CSS", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/CSS.png";
+        }
+        else if (ModuleData.Name.Contains("Html", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/Html.png";
+        }
+        else if (ModuleData.Name.Contains("JavaScript", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/JavaScript.png";
+        }
+        else if (ModuleData.Name.Contains("MVC", StringComparison.OrdinalIgnoreCase))
+        {
+            image = "Images/MVC.png";
+        }
+        else
+        {
+            image = "Images/Generic.png";
+        }
+
+        Truncate();
+    }
+
+    protected void Truncate()
+    {
+        truncatedString = ModuleData.Description.Length > maxLength ? $"{ModuleData.Description.Substring(0, maxLength)}..." : ModuleData.Description;
+    }
+}

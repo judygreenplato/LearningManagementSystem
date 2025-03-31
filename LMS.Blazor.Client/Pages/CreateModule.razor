@@ -1,0 +1,83 @@
+﻿@page "/create-module/{CourseId:int}"
+
+@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs.Create
+@using LMS.Shared.DTOs.Read
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveWebAssembly
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize(Roles = "Teacher")]
+
+<div class="no-padding container-fluid w-100 h-100 d-flex justify-content-center align-items-center lexicon-subpage-height">
+    <div class="lexicon-primary px-4 py-5 m-4 d-flex justify-content-center align-items-center flex-column lexicon-rounded-large col-md-6 login-width-mobile">
+        <h1 class="px-2 text-center">NY MODUL</h1>
+        <div class="row d-flex justify-content-center align-items-center col-md-10 login-info">
+            <div class="col-md-8">
+                <section>
+                    <EditForm Model="NewModule" OnValidSubmit="AddModule" FormName="createModuleForm">
+                        <DataAnnotationsValidator />
+                        <hr />
+                        <div class="form-floating mb-3">
+                            <InputText id="moduleName" class="form-control" aria-required="true" @bind-Value="NewModule.Name" placeholder="Modul namn" />
+                            <label for="moduleName">Modul namn</label>
+                            <ValidationMessage For="@(() => NewModule.Name)" class="text-danger" />
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <InputTextArea id="moduleDescription" class="form-control" aria-required="true" @bind-Value="NewModule.Description" placeholder="Beskrivning" />
+                            <label for="moduleDescription">Beskrivning</label>
+                            <ValidationMessage For="@(() => NewModule.Description)" class="text-danger" />
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <InputDate id="startDate" class="form-control" @bind-Value="NewModule.StartDate" placeholder="Startdatum" />
+                            <label for="startDate">Startdatum</label>
+                            <ValidationMessage For="@(() => NewModule.StartDate)" class="text-danger" />
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <InputDate id="endDate" class="form-control" @bind-Value="NewModule.EndDate" placeholder="Slutdatum" />
+                            <label for="endDate">Slutdatum</label>
+                            <ValidationMessage For="@(() => NewModule.EndDate)" class="text-danger" />
+                        </div>
+
+                        <div class="d-flex justify-content-center">
+                            <button type="submit" class="btn lexicon-button button-fontsize">SKAPA</button>
+                        </div>
+                    </EditForm>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int CourseId { get; set; }
+
+    [Inject]
+    private IApiService _apiService { get; set; } = default!;
+
+    private ModuleCreateDto NewModule { get; set; } = new ModuleCreateDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        NewModule.CourseId = CourseId;
+        NewModule.StartDate = DateTime.Now;
+        NewModule.EndDate = DateTime.Now;
+    }
+
+    private async Task AddModule()
+    {
+        try
+        {
+            NewModule = await _apiService.PostAsync<ModuleCreateDto, ModuleCreateDto>($"modules", NewModule);
+            NavigationManager.NavigateTo("/module-completed");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+}

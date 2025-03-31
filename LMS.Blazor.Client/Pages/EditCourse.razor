@@ -1,0 +1,121 @@
+﻿@page "/edit-course"
+@page "/edit-course/{courseId:int}"
+@rendermode InteractiveWebAssembly
+@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs.Read
+@using LMS.Shared.DTOs.Update
+@using Microsoft.AspNetCore.Components.Authorization
+@using LMS.Shared.DTOs
+@using Microsoft.AspNetCore.Authorization
+@using LMS.Blazor.Client.Components.Home
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize(Roles = "Teacher")]
+
+@if (course == null)
+{
+    <div class="d-flex w-100 h-100 justify-content-center align-items-center lexicon-subpage-height">
+        <div class="loader"></div>
+    </div>
+}
+else
+{
+    <div class="no-padding container-fluid w-100 h-100 d-flex justify-content-center align-items-center lexicon-subpage-height">
+        <div class="lexicon-primary px-4 py-5 m-4 d-flex justify-content-center align-items-center flex-column lexicon-rounded-large col-md-6 login-width-mobile">
+            <h1 class="px-2 text-center">REDIGERA KURS</h1>
+            <div class="row d-flex justify-content-center align-items-center col-md-10 login-info">
+                <div class="col-md-8">
+                    <section>
+                        <EditForm Model="course" OnValidSubmit="SaveCourse">
+                            <DataAnnotationsValidator />
+                            <hr />
+                            <div class="form-floating mb-3">
+                                <InputText id="courseName" class="form-control" aria-required="true" @bind-Value="course.Name" placeholder="Kurs namn" />
+                                <label for="courseName">Kurs namn</label>
+                                    <ValidationMessage For="() => course.Name" class="text-danger" />
+                            </div>
+                            <div class="form-floating mb-3">
+                                <InputTextArea id="courseDescription" class="form-control" aria-required="true" @bind-Value="course.Description"  placeholder="Beskrivning" />
+                                <label for="courseDescription">Beskrivning</label>
+                                <ValidationMessage For="() => course.Description" class="text-danger" />
+                            </div>
+                            <div class="form-floating mb-3">
+                                <InputDate id="startDate" class="form-control" aria-required="true" @bind-Value="course.StartDate"  placeholder="Startdatum" />
+                                <label for="startDate">Startdatum</label>
+                                <ValidationMessage For="() => course.StartDate" class="text-danger" />
+                            </div>
+                            <div class="form-floating mb-3">
+                                <InputDate id="endDate" class="form-control" aria-required="true" @bind-Value="course.EndDate"  placeholder="Slutdatum" />
+                                <label for="endDate">Slutdatum</label>
+                                <ValidationMessage For="() => course.EndDate" class="text-danger" />
+                            </div>
+                            <div class="d-flex justify-content-center">
+                                <button type="submit" class="btn lexicon-button button-fontsize">REDIGERA</button>
+                            </div>
+                        </EditForm>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Inject]
+    private IApiService _apiService { get; set; } = default!;
+
+    [Parameter]
+    public int CourseId { get; set; }
+
+    private CourseUpdateDto? course;
+
+    // Fetch course details on render
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                if (_apiService != null)
+                {
+                    course = await _apiService.GetAsync<CourseUpdateDto>($"courses/{CourseId}");
+                    StateHasChanged();
+                }
+                else
+                {
+                    Console.WriteLine("ApiService is not initialized.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while fetching course: {ex.Message}");
+            }
+        }
+    }
+
+    // Save course details
+    private async Task SaveCourse()
+    {
+        if (course != null && _apiService != null)
+        {
+            try
+            {
+                var updatedCourse = await _apiService.PutAsync<CourseUpdateDto, CourseUpdateDto>($"courses/{CourseId}", course);
+
+                if (updatedCourse != null) // Check if the course was successfully updated
+                {
+                    NavigationManager.NavigateTo("/admin");
+                }
+                else
+                {
+                    Console.WriteLine("Failed to update the course.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while saving course: {ex.Message}");
+            }
+        }
+    }
+}

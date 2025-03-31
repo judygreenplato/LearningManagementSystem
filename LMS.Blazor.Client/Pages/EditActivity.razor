@@ -1,0 +1,132 @@
+﻿@page "/edit-activity/{activityId:int}"
+@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs.Update
+@using LMS.Shared.DTOs.Create
+@using LMS.Shared.DTOs.Read
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveWebAssembly
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize(Roles = "Teacher")]
+
+@if (activity == null)
+{
+	<div class="d-flex w-100 h-100 justify-content-center align-items-center lexicon-subpage-height">
+		<div class="loader"></div>
+	</div>
+}
+else
+{
+	<div class="no-padding container-fluid w-100 h-100 d-flex justify-content-center align-items-center lexicon-subpage-height">
+        <div class="lexicon-primary px-4 py-5 m-4 d-flex justify-content-center align-items-center flex-column lexicon-rounded-large col-md-6 login-width-mobile">
+            <h1 class="px-2 text-center">REDIGERA AKTIVITET</h1>
+            <div class="row d-flex justify-content-center align-items-center col-md-10 login-info">
+                <div class="col-md-8">
+                    <section>
+						<EditForm Model="activity" OnValidSubmit="SaveActivity">
+							<DataAnnotationsValidator />
+							<hr />
+							<div class="form-floating mb-3">
+								<InputText id="activityName" class="form-control" aria-required="true" placeholder="Aktivitets namn" @bind-Value="activity.Name" />
+								<label for="activityName">Aktivitets namn</label>
+								<ValidationMessage For="() => activity.Name" class="text-danger" />
+							</div>
+							<div class="form-floating mb-3">
+								<InputTextArea id="activityDescription" class="form-control" aria-required="true" placeholder="Beskrivning" @bind-Value="activity.Description" />
+								<label for="activityDescription">Beskrivning</label>
+								<ValidationMessage For="() => activity.Description" class="text-danger" />
+							</div>
+							<div class="form-floating mb-3">
+								<InputDate id="startDate" class="form-control" aria-required="true" placeholder="Startdatum" @bind-Value="activity.StartDate" />
+								<label for="startDate">Startdatum</label>
+								<ValidationMessage For="() => activity.StartDate" class="text-danger" />
+							</div>
+							<div class="form-floating mb-3">
+								<InputDate id="endDate" class="form-control" aria-required="true" placeholder="Slutdatum" @bind-Value="activity.EndDate" />
+								<label for="endDate">Slutdatum</label>
+								<ValidationMessage For="() => activity.EndDate" class="text-danger" />
+							</div>
+							<div class="form-floating mb-3 mt-2">
+								<InputSelect id="activityType" class="form-control" aria-label="Select Activity Type" @bind-Value="activity.ActivityTypeId">
+									@foreach (var activityType in ActivityTypes)
+									{
+										<option value="@activityType.ActivityTypeId">@activityType.Type</option>
+									}
+								</InputSelect>
+								<label for="activityType">Välj aktivitets typ</label>
+							</div>
+							<div class="d-flex justify-content-center">
+								<button type="submit" class="btn lexicon-button button-fontsize">REDIGERA</button>
+							</div>
+						</EditForm>
+					</section>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+@code {
+	[Inject]
+	private IApiService _apiService { get; set; } = default!;
+
+	[Parameter]
+	public int ActivityId { get; set; }
+
+	private ActivityUpdateDto? activity;
+
+	private List<ActivityTypeDto> ActivityTypes { get; set; } = new();
+
+
+	// Fetch activity details on render
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			try
+			{
+				if (_apiService != null)
+				{
+					ActivityTypes = (await _apiService.GetAsync<List<ActivityTypeDto>>("activities/types")).ToList();
+					var fetchedActivity = await _apiService.GetAsync<ActivityUpdateDto>($"activities/{ActivityId}");
+					activity = fetchedActivity ?? new ActivityUpdateDto();
+
+					StateHasChanged();
+				}
+				else
+				{
+					Console.WriteLine("ApiService is not initialized.");
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error while fetching activity: {ex.Message}");
+			}
+		}
+	}
+
+	// Save activity details
+	private async Task SaveActivity()
+	{
+		if (activity != null && _apiService != null)
+		{
+			try
+			{
+				var updatedActivity = await _apiService.PutAsync<ActivityUpdateDto, ActivityUpdateDto>($"activities/{ActivityId}", activity);
+
+				if (updatedActivity != null) // Check if the activity was successfully updated
+				{
+					NavigationManager.NavigateTo("/admin");
+				}
+				else
+				{
+					Console.WriteLine("Failed to update the activity.");
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error while saving activity: {ex.Message}");
+			}
+		}
+	}
+}

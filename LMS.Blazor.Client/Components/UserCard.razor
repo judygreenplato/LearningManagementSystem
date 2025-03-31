@@ -1,0 +1,69 @@
+﻿@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs.Read
+@inject NavigationManager NavigationManager
+
+@if (Users == null || !Users.Any())
+{
+    <div class="text-center">
+        <p>Inga användare tillgängliga.</p>
+    </div>
+}
+else
+{
+    <div class="col-md-8 mb-4 align-self-center w-100">
+        <h2 class="text-center">ANVÄNDARE</h2>
+        <div class="card overflow-auto lexicon-rounded">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-borderless">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="align-middle">E-post</th>
+                                <th class="align-middle">Förnamn</th>
+                                <th class="align-middle">Efternamn</th>
+                                <th class="align-middle">Roll</th>
+                                <th class="text-center align-middle"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Users)
+                            {
+                                <tr>
+                                    <td class="align-middle">@user.Email</td>
+                                    <td class="align-middle">@user.FirstName</td>
+                                    <td class="align-middle">@user.LastName</td>
+                                    <td class="align-middle">@(user.Role == "Teacher" ? "Lärare" : "Student")</td>
+                                    <td class="d-flex justify-content-center align-items-center">
+                                        <a href="/edit-user/@user.Id" class="btn lexicon-button-tiny button-fontsize-tiny">Redigera</a>
+                                        <a class="btn lexicon-button-delete button-fontsize-tiny ms-2" @onclick="(() => DeleteUser(user.Id))">
+                                            <img src="Images/bin.png" />
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@code {
+    [Inject]
+    private IApiService _apiService { get; set; } = default!;
+    [Parameter]
+    public List<UserDto> Users { get; set; } = new();
+
+    private async Task DeleteUser(string id)
+    {
+        try
+        {
+            await _apiService.DeleteAsync<UserDto>($"users/{id}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while fetching courses: {ex.Message}");
+        }
+        NavigationManager.NavigateTo(NavigationManager.Uri, true);
+    }
+}

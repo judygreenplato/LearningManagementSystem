@@ -1,0 +1,121 @@
+﻿@page "/edit-module/{moduleId:int}"
+@rendermode InteractiveWebAssembly
+@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs.Update
+@using Microsoft.AspNetCore.Authorization
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize(Roles = "Teacher")]
+
+@if (module == null)
+{
+    <div class="d-flex w-100 h-100 justify-content-center align-items-center lexicon-subpage-height">
+        <div class="loader"></div>
+    </div>
+}
+else
+{
+    <div class="no-padding container-fluid w-100 h-100 d-flex justify-content-center align-items-center lexicon-subpage-height">
+        <div class="lexicon-primary px-4 py-5 m-4 d-flex justify-content-center align-items-center flex-column lexicon-rounded-large col-md-6 login-width-mobile">
+            <h1 class="px-2 text-center">REDIGERA MODUL</h1>
+            <div class="row d-flex justify-content-center align-items-center col-md-10 login-info">
+                <div class="col-md-8">
+                    <section>
+                        <EditForm Model="module" OnValidSubmit="SaveModule">
+                            <DataAnnotationsValidator />
+                            <hr />
+                            <div class="form-floating mb-3">
+                                <InputText id="moduleName" class="form-control" aria-required="true" @bind-Value="module.Name" placeholder="Modul namn" />
+                                <label for="moduleName">Modul namn</label>
+                                <ValidationMessage For="() => module.Name" class="text-danger" />
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <InputTextArea id="moduleDescription" class="form-control" aria-required="true" @bind-Value="module.Description" placeholder="Beskrivning" />
+                                <label for="moduleDescription">Beskrivning</label>
+                                <ValidationMessage For="() => module.Description" class="text-danger" />
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <InputDate id="startDate" class="form-control" aria-required="true" @bind-Value="module.StartDate" placeholder="Startdatum" />
+                                <label for="startDate">Startdatum</label>
+                                <ValidationMessage For="() => module.StartDate" class="text-danger" />
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <InputDate id="endDate" class="form-control" aria-required="true" @bind-Value="module.EndDate" placeholder="Slutdatum" />
+                                <label for="endDate">Slutdatum</label>
+                                <ValidationMessage For="() => module.EndDate" class="text-danger" />
+                            </div>
+
+                            <div class="d-flex justify-content-center">
+                                <button type="submit" class="btn lexicon-button button-fontsize">REDIGERA</button>
+                            </div>
+                        </EditForm>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject]
+    private IApiService _apiService { get; set; } = default!;
+
+    [Parameter]
+    public int ModuleId { get; set; }
+
+    private ModuleUpdateDto? module;
+
+    // Fetch module details on render
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                if (_apiService != null)
+                {
+                    // Fetch the module and map it to ModuleUpdateDto
+                    var fetchedModule = await _apiService.GetAsync<ModuleUpdateDto>($"modules/{ModuleId}");
+                    module = fetchedModule;
+                    StateHasChanged();
+                }
+                else
+                {
+                    Console.WriteLine("ApiService is not initialized.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while fetching module: {ex.Message}");
+            }
+        }
+    }
+
+    // Save module details
+    private async Task SaveModule()
+    {
+        if (module != null && _apiService != null)
+        {
+            try
+            {
+                var updatedModule = await _apiService.PutAsync<ModuleUpdateDto, ModuleUpdateDto>($"modules/{ModuleId}", module);
+
+                if (updatedModule != null) // Check if the module was successfully updated
+                {
+                    NavigationManager.NavigateTo("/admin");
+                }
+                else
+                {
+                    Console.WriteLine("Failed to update the module.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while saving module: {ex.Message}");
+            }
+        }
+    }
+}

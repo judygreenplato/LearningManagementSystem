@@ -1,0 +1,69 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+<div class="page">
+    <main class="lexicon-background">
+        <nav class="navbar no-padding">
+            <a class="navbar-brand" href="home">
+                <img class="lexicon-logo" src="Images/lexicon-logo.svg" />
+            </a>
+            <button class="navbar-toggler navbar-toggler-helper" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <hr />
+                <hr />
+                <hr />
+            </button>
+            
+            <div class="navbar-expand collapse navbar-collapse lexicon-nav-helper" id="navbarSupportedContent">
+                <ul class="navbar-nav">
+                    <AuthorizeView>
+                        <Authorized>
+                            <li class="nav-item">
+                                <a class="lexicon-nav button-fontsize" href="home">HEM</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="lexicon-nav button-fontsize" href="profile">PROFIL</a>
+                            </li>
+                        </Authorized>
+                    </AuthorizeView>
+                    <AuthorizeView Roles="Teacher">
+                        <Authorized>
+                            <li class="nav-item">
+                                <a class="lexicon-nav button-fontsize" href="admin">ADMIN</a>
+                            </li>
+                        </Authorized>
+                    </AuthorizeView>
+                    <AuthorizeView>
+                        <Authorized>
+                            <li class="nav nav-button-helper">
+                                <form action="Account/Logout" method="post">
+                                    <AntiforgeryToken />
+                                    <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                                    <button type="submit" class="nav-button lexicon-button button-fontsize">
+                                       LOGGA UT
+                                    </button>
+                                </form>
+                            </li>
+                        </Authorized>
+                    </AuthorizeView>
+                </ul>
+            </div>
+        </nav>
+
+        <section class="lexicon-page-height no-padding">
+            @Body
+        </section>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    private string? currentUrl;
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+    }
+}

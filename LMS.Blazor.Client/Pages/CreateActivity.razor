@@ -1,0 +1,107 @@
+﻿@page "/create-activity/{ModuleId:int}"
+@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs.Create
+@using LMS.Shared.DTOs.Read
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveWebAssembly
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize(Roles = "Teacher")]
+
+<div class="no-padding container-fluid w-100 h-100 d-flex justify-content-center align-items-center lexicon-subpage-height">
+    <div class="lexicon-primary px-4 py-5 m-4 d-flex justify-content-center align-items-center flex-column lexicon-rounded-large col-md-6 login-width-mobile">
+        <h1 class="px-2 text-center">NY AKTIVITET</h1>
+        <div class="row d-flex justify-content-center align-items-center col-md-10 login-info">
+            <div class="col-md-8">
+                <section>
+                    <EditForm Model="NewActivity" OnValidSubmit="AddActivity" FormName="createActivityForm">
+                        <DataAnnotationsValidator />
+                        <hr />
+                        <ValidationSummary />
+                        <div class="form-floating mb-3">
+                            <InputText id="activityName" class="form-control" aria-required="true" placeholder="Aktivitets namn" @bind-Value="NewActivity.Name" />
+                            <label for="activityName">Aktivitets namn</label>
+                            <ValidationMessage For="@(() => NewActivity.Name)" class="text-danger" />
+                        </div>
+                        <div class="form-floating mb-3">
+                            <InputTextArea id="activityDescription" class="form-control" aria-required="true" placeholder="Beskrivning" @bind-Value="NewActivity.Description" />
+                            <label for="activityDescription">Beskrivning</label>
+                            <ValidationMessage For="@(() => NewActivity.Description)" class="text-danger" />
+                        </div>
+                        <div class="form-floating mb-3">
+                            <InputDate id="startDate" class="form-control" aria-required="true" placeholder="Startdatum" @bind-Value="NewActivity.StartDate" />
+                            <label for="startDate">Startdatum</label>
+                            <ValidationMessage For="@(() => NewActivity.StartDate)" class="text-danger" />
+                        </div>
+                        <div class="form-floating mb-3">
+                            <InputDate id="endDate" class="form-control" aria-required="true" placeholder="Slutdatum" @bind-Value="NewActivity.EndDate" />
+                            <label for="endDate">Slutdatum</label>
+                            <ValidationMessage For="@(() => NewActivity.EndDate)" class="text-danger" />
+                        </div>
+                        <div class="form-floating mb-3 mt-2">
+                            <InputSelect id="activityType" class="form-control" aria-label="Select Activity Type" @bind-Value="NewActivity.ActivityTypeId">
+                                @foreach (var activityType in ActivityTypes)
+                                {
+                                    <option value="@activityType.ActivityTypeId">@activityType.Type</option>
+                                }
+                            </InputSelect>
+                            <label for="endDate">Välj aktivitets typ</label>
+                            <ValidationMessage For="@(() => NewActivity.ActivityTypeId)" class="text-danger" />
+                        </div>
+                        <div class="d-flex justify-content-center">
+                            <button type="submit" class="btn lexicon-button button-fontsize">SKAPA</button>
+                        </div>
+                    </EditForm>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int ModuleId { set; get; }
+
+    [Inject]
+    private IApiService _apiService { get; set; } = default!;
+
+    private ActivityCreateDto NewActivity { get; set; } = new ActivityCreateDto();
+    private List<ActivityTypeDto> ActivityTypes { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Fetch activity types
+            ActivityTypes = await _apiService.GetAsync<List<ActivityTypeDto>>("activities/types") ?? new List<ActivityTypeDto>();
+
+            // Initialize the new activity
+            NewActivity.ModuleId = ModuleId;
+            NewActivity.StartDate = DateTime.Now;
+            NewActivity.EndDate = DateTime.Now;
+
+            // Set the default ActivityTypeId to the first type (if any exist)
+            if (ActivityTypes.Any())
+            {
+                NewActivity.ActivityTypeId = ActivityTypes.First().ActivityTypeId;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while initializing: {ex.Message}");
+        }
+    }
+
+    private async Task AddActivity()
+    {
+        try
+        {
+            var createdActivity = await _apiService.PostAsync<ActivityCreateDto, ActivityCreateDto>("activities", NewActivity);
+            NavigationManager.NavigateTo("/create-activity-success");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+}

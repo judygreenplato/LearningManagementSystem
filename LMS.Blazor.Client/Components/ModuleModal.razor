@@ -1,0 +1,83 @@
+﻿@using LMS.Blazor.Client.Services
+@using LMS.Shared.DTOs.Create
+@using LMS.Shared.DTOs.Read
+
+<button type="button" class="btn lexicon-button button-fontsize" @onclick="ToggleModalVisibility">
+    Ny modul
+</button>
+
+@if (isModalVisible)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered lexicon-rounded">
+            <div class="modal-content">
+                <h2>COURSE ID!!!: @CourseId</h2>
+                <div class="modal-header">
+                    <h4 class="modal-title">Registrera ny modul</h4>
+                    <button type="button" class="btn-close" @onclick="ToggleModalVisibility" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label for="moduleName" class="form-label">Namn</label>
+                        <input type="text" id="moduleName" class="form-control" @bind="NewModule.Name" required />
+                        <ValidationMessage For="@(() => NewModule.Name)" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="moduleDescription" class="form-label">Beskrivning</label>
+                        <textarea id="moduleDescription" class="form-control" @bind="NewModule.Description" required></textarea>
+                        <ValidationMessage For="@(() => NewModule.Description)" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="startDate" class="form-label">Startdatum</label>
+                        <input type="date" id="startDate" class="form-control" @bind="NewModule.StartDate" required />
+                        <ValidationMessage For="@(() => NewModule.StartDate)" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="endDate" class="form-label">Slutdatum</label>
+                        <input type="date" id="endDate" class="form-control" @bind="NewModule.EndDate" required />
+                        <ValidationMessage For="@(() => NewModule.EndDate)" />
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-end">
+                    <button type="button" class="btn lexicon-button button-fontsize me-2" @onclick="ResetModal">Återställ</button>
+                    <button type="button" class="btn lexicon-button button-fontsize" @onclick="AddModule">Registrera modul</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject]
+    private IApiService _apiService { get; set; } = default!;
+
+    [Parameter]
+    public int CourseId { get; set; }
+
+    private ModuleDto NewModule { get; set; } = new ModuleDto();
+    private bool isModalVisible = false;
+
+    private void ToggleModalVisibility()
+    {
+        isModalVisible = !isModalVisible;
+    }
+
+    private void ResetModal()
+    {
+        NewModule = new ModuleDto();
+        NewModule.StartDate = DateTime.Now;
+        NewModule.EndDate = DateTime.Now;
+    }
+
+    protected override void OnInitialized()
+    {
+        ResetModal();
+    }
+
+    private async Task AddModule()
+    {
+        await _apiService.PostAsync<ModuleDto, ModuleDto>($"/modules/{CourseId}", NewModule);
+        ResetModal();
+        isModalVisible = false; // Hide modal after adding the module
+    }
+}

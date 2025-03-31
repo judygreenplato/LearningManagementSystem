@@ -1,0 +1,13 @@
+﻿@page "/register-user-complete"
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize(Roles = "Teacher")]
+
+<PageTitle>Registed User</PageTitle>
+
+<div class="no-padding container-fluid w-100 h-100 d-flex justify-content-center align-items-center lexicon-subpage-height">
+    <div class="lexicon-primary p-5 m-4 d-flex justify-content-center align-items-center flex-column lexicon-rounded-large">
+        <h1 class="special-margin text-center">ANVÄNDARE SKAPAD!</h1>
+        <a class="nav-link btn nav-button lexicon-button button-fontsize special-margin-button" href="admin">FORTSÄTT</a>
+    </div>
+</div>
